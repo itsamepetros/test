@@ -137,16 +137,16 @@ train_dataset = RegressionDataset(torch.from_numpy(X_train).float(), torch.from_
 val_dataset = RegressionDataset(torch.from_numpy(X_val).float(), torch.from_numpy(y_val).float())
 test_dataset = RegressionDataset(torch.from_numpy(X_test).float(), torch.from_numpy(y_test).float())
 
-EPOCHS = 12
+EPOCHS = 50
 BATCH_SIZE = 64
 LEARNING_RATE = 0.001
 num_features = len(X.columns)
 
 train_loader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-val_loader = DataLoader(dataset=val_dataset, batch_size=1)
-test_loader = DataLoader(dataset=test_dataset, batch_size=1)
+val_loader = DataLoader(dataset=val_dataset, batch_size=num_features)
+test_loader = DataLoader(dataset=test_dataset, batch_size=num_features)
 
-
+num_features
 class MultipleRegression(nn.Module):
     def __init__(self, num_features):
         super(MultipleRegression, self).__init__()
@@ -180,7 +180,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
 
-model = MultipleRegression(NUM_FEATURES)
+model = MultipleRegression(num_features)
 model.to(device)
 print(model)
 
@@ -191,8 +191,6 @@ loss_stats = {
     'train': [],
     'val': []
 }
-
-print('Begin Training')
 
 
 for i in tqdm(range(1, EPOCHS + 1)):
@@ -235,4 +233,7 @@ for i in tqdm(range(1, EPOCHS + 1)):
 
 
     print(f'Epoch {i+0:03}: | Train Loss: {train_epoch_loss/len(train_loader):.5f} | Val Loss: {val_epoch_loss/len(val_loader):.5f}')
-|
+
+train_val_loss_df = pd.DataFrame.from_dict(loss_stats).reset_index().melt(id_vars=['index']).rename(columns={"index":"epochs"})
+plt.figure(figsize=(15,8))
+sns.lineplot(data=train_val_loss_df, x = "epochs", y="value", hue="variable").set_title('Train-Val Loss/Epoch')
